@@ -9,25 +9,29 @@ import (
 
 // Config stores application configuration
 type Config struct {
+	// the directory used for managing files
+	Dir string
 	// a prefix used for all app specific environment variables
-	envVarPrefix string
+	EnvVarPrefix string
 	// the name of the host the application is running on
-	hostname string
+	Hostname string
 	// address to listen on
-	listenAddr string
+	Addr string
 	// port to listen on
-	port int
+	Port int
 }
 
 // NewConfig creates and returns a new Config.
 func NewConfig(envVarPrefix string) *Config {
 	c := Config{
-		envVarPrefix: envVarPrefix,
-		listenAddr:   "",
-		port:         8900,
+		Dir:          "/tmp",
+		EnvVarPrefix: envVarPrefix,
+		Addr:         "",
+		Port:         8900,
 	}
-	flag.StringVar(&c.listenAddr, "addr", c.listenAddr, "address to listen on")
-	flag.IntVar(&c.port, "port", c.port, "port to listen on")
+	flag.StringVar(&c.Addr, "addr", c.Addr, "address to listen on")
+	flag.StringVar(&c.Dir, "dir", c.Dir, "directory where files will be managed")
+	flag.IntVar(&c.Port, "port", c.Port, "port to listen on")
 	flag.Usage = c.Usage
 	return &c
 }
@@ -36,20 +40,30 @@ func NewConfig(envVarPrefix string) *Config {
 func (c *Config) Parse() error {
 	flag.Parse()
 
-	key := c.envVarPrefix + "ADDR"
+	key := c.EnvVarPrefix + "ADDR"
 	val := os.Getenv(key)
 	if val != "" {
-		c.listenAddr = os.Getenv(key)
+		c.Addr = os.Getenv(key)
 	}
 
-	key = c.envVarPrefix + "PORT"
+	key = c.EnvVarPrefix + "DIR"
+	val = os.Getenv(key)
+	if val != "" {
+		c.Dir = os.Getenv(key)
+	}
+	_, err := os.Stat(c.Dir)
+	if os.IsNotExist(err) {
+		return fmt.Errorf("directory=%s does not exist", c.Dir)
+	}
+
+	key = c.EnvVarPrefix + "PORT"
 	val = os.Getenv(key)
 	if val != "" {
 		num, err := strconv.Atoi(val)
 		if err != nil {
 			return fmt.Errorf("port=%v is not a valid number", val)
 		}
-		c.port = num
+		c.Port = num
 	}
 	return nil
 }
@@ -60,5 +74,10 @@ func (c *Config) Usage() {
 	flag.PrintDefaults()
 	fmt.Fprintln(os.Stderr)
 	fmt.Fprintln(os.Stderr, "Note: environment variables can be defined to override any command-line flag.")
-	fmt.Fprintf(os.Stderr, "The variables are equivalent to the command-line flag names, except that they should be upper-case and prefixed with \"%s\" (excluding double quotes)\n", c.envVarPrefix)
+	fmt.Fprintf(os.Stderr, "The variables are equivalent to the command-line flag names, except that they should be upper-case and prefixed with \"%s\" (excluding double quotes)\n", c.EnvVarPrefix)
+}
+
+// ServeAddr returns the address the server should listen on.
+func (c *Config) ServeAddr() string {
+	return fmt.Sprintf("%s:%d", c.Addr, c.Port)
 }

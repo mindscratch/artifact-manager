@@ -36,7 +36,7 @@ Submitting this file with cURL would look like:
 curl -X POST http://artifact-manager.marathon.mesos:8900/?src=mydata&dst=myfile-latest -d @myfile-2018-08-10.tgz
 ```
 
-This file will be written to `/data` and then extracted, so we'd up with:
+This file will be written to `/data` and then extracted, so we'd end up with:
 
 ```
 /data/a42dacf31de.tgz   <-- random name for the file that was uploaded

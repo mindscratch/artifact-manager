@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/mindscratch/artifact-manager/core"
+	"github.com/mindscratch/artifact-manager/http"
 )
 
 func main() {
@@ -23,6 +24,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	core.Log("this is a test abc=%d", 123)
-	core.Log("config: %#v", config)
+	core.Log("Serving requests at %s", config.ServeAddr())
+
+	handler := http.NewHandler(config)
+	err = handler.ListenAndServe()
+	core.Log("server failed: %v", err)
 }
