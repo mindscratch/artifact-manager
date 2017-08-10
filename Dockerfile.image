@@ -1,0 +1,5 @@
+FROM scratch
+
+ADD ./bin/artifact-manager /bin/artifact-manager
+
+ENTRYPOINT ["artifact-manager"]

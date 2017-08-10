@@ -1,0 +1,10 @@
+FROM golang:1.8.3
+
+RUN mkdir -p /go/src/github.com/mindscratch/artifact-manager
+ADD . /go/src/github.com/mindscratch/artifact-manager/
+WORKDIR /go/src/github.com/mindscratch/artifact-manager
+RUN go build -o artifact-manager 
+RUN mv ./artifact-manager /bin/artifact-manager
+
+
+ENTRYPOINT ["artifact-manager"]
