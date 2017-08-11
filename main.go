@@ -15,7 +15,7 @@ func main() {
 	// src, dst -- needed for symlink
 	// restart apps - true (default - with 'force')
 	//
-	// check file when uploaded to verify it has a directory inside
+	// Create go routine worker pool
 
 	config := core.NewConfig("AM_")
 	err := config.Parse()
