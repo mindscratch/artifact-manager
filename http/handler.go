@@ -2,9 +2,8 @@ package http
 
 import (
 	"fmt"
-	"io"
-	"io/ioutil"
 	gohttp "net/http"
+	"path"
 
 	"github.com/mindscratch/artifact-manager/core"
 )
@@ -34,30 +33,59 @@ func (h *Handler) UploadHandler(w gohttp.ResponseWriter, r *gohttp.Request) {
 		fmt.Fprintf(w, "invalid request, no content provided")
 		return
 	}
+	// check URL parameters
+	queryParams := r.URL.Query()
+	name := queryParams.Get("name")
+	src := queryParams.Get("src")
+	dst := queryParams.Get("dst")
+	if name == "" {
+		w.WriteHeader(gohttp.StatusBadRequest)
+		fmt.Fprintf(w, "name parameter must be provided in the URL")
+		return
+	}
+	defer r.Body.Close()
 
-	// create a temporary file to copy the request contents into
-	f, err := ioutil.TempFile(h.config.Dir, h.config.EnvVarPrefix)
+	// in case the name included a path, ensure we jut have the name of the file, and
+	// add the directory to it
+	name = path.Base(name)
+	name = path.Join(h.config.Dir, name)
+
+	// src and dst are optional, if they're provided a symlink we'll be created
+	var err error
+	createSymlink := false
+	if src != "" && dst != "" {
+		createSymlink = true
+		src = path.Join(h.config.Dir, src)
+		dst = path.Join(h.config.Dir, dst)
+	}
+
+	// save the file
+	err = core.SaveFile(name, r.Body, r.ContentLength)
 	if err != nil {
 		w.WriteHeader(gohttp.StatusInternalServerError)
-		fmt.Fprintf(w, "unable to create file to write request body into: %v", err)
-		return
-	}
-	defer f.Close()
-
-	// copy the request body into the file
-	written, err := io.Copy(f, r.Body)
-	if err != nil {
-		w.WriteHeader(gohttp.StatusInternalServerError)
-		fmt.Fprintf(w, "failed to write request body to %s: %v", f.Name(), err)
-		return
-	}
-	if written != r.ContentLength {
-		w.WriteHeader(gohttp.StatusInternalServerError)
-		fmt.Fprintf(w, "failed to write entire request body to %s, wrote=%d bytes, expected=%d bytes", f.Name(), written, r.ContentLength)
+		fmt.Fprintf(w, "problem saving file to %s: %v\n", name, err)
 		return
 	}
 
-	fmt.Fprintf(w, "wrote file to %s\n", f.Name())
+	if createSymlink {
+		// extract the file
+		err = core.ExtractFile(name, h.config.Dir)
+		if err != nil {
+			w.WriteHeader(gohttp.StatusInternalServerError)
+			fmt.Fprintf(w, "problem extracting file %s into %s: %v\n", name, h.config.Dir, err)
+			return
+		}
+
+		// create symlink
+		err = core.Symlink(src, dst)
+		if err != nil {
+			w.WriteHeader(gohttp.StatusInternalServerError)
+			fmt.Fprintf(w, "problem creating symlink from %s to %s: %v", src, dst, err)
+			return
+		}
+	}
+
+	w.WriteHeader(gohttp.StatusCreated)
 }
 
 // ListenAndServe starts the server
