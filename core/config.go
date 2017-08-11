@@ -29,9 +29,15 @@ func NewConfig(envVarPrefix string) *Config {
 		Addr:         "",
 		Port:         8900,
 	}
-	flag.StringVar(&c.Addr, "addr", c.Addr, "address to listen on")
-	flag.StringVar(&c.Dir, "dir", c.Dir, "directory where files will be managed")
-	flag.IntVar(&c.Port, "port", c.Port, "port to listen on")
+	if flag.Lookup("addr") == nil {
+		flag.StringVar(&c.Addr, "addr", c.Addr, "address to listen on")
+	}
+	if flag.Lookup("dir") == nil {
+		flag.StringVar(&c.Dir, "dir", c.Dir, "directory where files will be managed")
+	}
+	if flag.Lookup("port") == nil {
+		flag.IntVar(&c.Port, "port", c.Port, "port to listen on")
+	}
 	flag.Usage = c.Usage
 	return &c
 }

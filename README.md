@@ -33,7 +33,7 @@ Required URL parameters:
 To have a symlink created, the following URL parameters must be provided:
 
 * src - the source for the symlink that will be created
-* dst - the destination for the symlink that willbe created.
+* dst - the destination for the symlink that will be created.
 
 If the file is an "archive", it will only be extracted if the `src` and `dst` URL parameters
 are provided.
