@@ -55,6 +55,7 @@ type ArtifactsService struct {
 	debug     io.Writer
 	mutex     *sync.Mutex
 	stopCh    chan struct{}
+	stopped   bool
 }
 
 // NewArtifactsService configures, creates and returns a new ArtifactsService.
@@ -132,21 +133,20 @@ func (as *ArtifactsService) HasArtifact(name string) bool {
 	return result
 }
 
-// Start the service, polling for artifacts after each interval.
-func (as *ArtifactsService) Start(interval time.Duration) {
+// StartFetching starts polling for artifacts after each interval.
+func (as *ArtifactsService) StartFetching(interval time.Duration) {
 	err := as.FetchArtifacts()
 	if err != nil {
 		log.Printf("problem fetching marathon artifacts: %v", err)
 	}
-	stop := false
 
 	for {
-		if stop {
+		if as.stopped {
 			break
 		}
 		select {
 		case <-as.stopCh:
-			stop = true
+			as.stopped = true
 		case <-time.After(interval):
 			log.Println("fetching artifacts...")
 			err = as.FetchArtifacts()
@@ -156,14 +156,13 @@ func (as *ArtifactsService) Start(interval time.Duration) {
 			}
 		}
 	}
-	log.Println("ARTIFACT SERVICE HAS STOPPED")
+	log.Println("ARTIFACT FETCHING SERVICE HAS STOPPED")
 }
 
-// Stop the service, passing true to block until it stops.
+// Stop stops the service, passing true to block until it stops.
 func (as *ArtifactsService) Stop(block bool) {
 	log.Println("STOPPING")
 	if block {
-		//as.stopCh <- struct{}{}
 		close(as.stopCh)
 		log.Println("STOPPED")
 	} else {
@@ -173,6 +172,51 @@ func (as *ArtifactsService) Stop(block bool) {
 		}()
 	}
 	log.Println("exiting stop routine")
+}
+
+// StartApplicationRestartProcessing begins waiting for requests on the requestQueue.
+// Once the queue has "count" items or "timeout" has occured, the marathon
+// applications will be restarted.
+func (as *ArtifactsService) StartApplicationRestartProcessing(requestQueue <-chan string, count int, timeout time.Duration) {
+	artifactNames := make([]string, 0)
+	for {
+		if as.stopped {
+			break
+		}
+		select {
+		case <-as.stopCh:
+			as.stopped = true
+		case name := <-requestQueue:
+			artifactNames = append(artifactNames, name)
+			if len(artifactNames) >= count {
+				as.restartApps(artifactNames)
+				artifactNames = make([]string, 0)
+			}
+		case <-time.After(timeout):
+			log.Println("Timeout", len(artifactNames))
+			if len(artifactNames) >= 0 {
+				as.restartApps(artifactNames)
+				artifactNames = make([]string, 0)
+			}
+		}
+	}
+	log.Println("ARTIFACT RESTART SERVICE HAS STOPPED")
+}
+
+func (as *ArtifactsService) restartApps(artifactNames []string) {
+	log.Printf("we have %d artifact names that were updated\n", len(artifactNames))
+	for _, name := range artifactNames {
+		appIds := as.artifacts.Get(name)
+		fmt.Printf("found %d app ids associated with %s\n", len(appIds), name)
+		for _, appID := range appIds {
+			deploymentID, err := as.client.RestartApplication(appID, true)
+			if err != nil {
+				log.Printf("failed to restart %s: %v\n", appID, err)
+				continue
+			}
+			log.Printf("restarted %s deploymentID=%s version=%s\n", appID, deploymentID.DeploymentID, deploymentID.Version)
+		}
+	}
 }
 
 func (as *ArtifactsService) log(format string, values ...interface{}) {

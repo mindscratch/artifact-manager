@@ -114,7 +114,7 @@ func (h *Handler) UploadHandler(w gohttp.ResponseWriter, r *gohttp.Request) {
 		fmt.Fprintf(w, "server has too many requests (%d) to fulfill", len(h.requestQueue))
 		return
 	}
-	h.requestQueue <- requestMsg
+	h.requestQueue <- path.Base(requestMsg)
 
 	w.WriteHeader(gohttp.StatusCreated)
 }
