@@ -17,6 +17,39 @@ expected the archive has a directory inside of it, containing its files.
 
 After putting the files to disk, a symlink will be created to it (name provided during upload).
 
+## Usage
+
+To run the application, simply execute the binary. There are a few configuration options which all have
+default values. You can set the values via command-line flags, or using environment variables.
+
+```
+> ./artifact-manager --help
+Usage of artifact-manager:
+  -addr string
+        address to listen on
+  -dir string
+        directory where files will be managed (default "/tmp")
+  -port int
+        port to listen on (default 8900)
+
+Note: environment variables can be defined to override any command-line flag.
+The variables are equivalent to the command-line flag names, except that they should be upper-case and prefixed with "AM_" (excluding double quotes)
+```
+
+For example, to start the artifact-manager listening on port 9000:
+
+```
+// set the port via command-line fag
+./artifact-manager -port 9000
+
+// set the port via environment variable
+AM_PORT=9000 ./aratifact-manager
+
+// alternate method of setting environment variable
+export AM_PORT=9000
+./artifact-manager
+```
+
 ## HTTP API
 
 ### Upload a File

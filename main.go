@@ -24,9 +24,11 @@ func main() {
 		os.Exit(1)
 	}
 
+	requestQueue := make(chan string, 100)
+
 	core.Log("Serving requests at %s", config.ServeAddr())
 
-	handler := http.NewHandler(config)
+	handler := http.NewHandler(config, requestQueue, 100)
 	err = handler.ListenAndServe()
 	core.Log("server failed: %v", err)
 }

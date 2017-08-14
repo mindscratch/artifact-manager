@@ -8,13 +8,23 @@ import (
 	"github.com/mindscratch/artifact-manager/core"
 )
 
+// Handler represents a type that handles HTTP requests.
 type Handler struct {
+	// application configuraiton
 	config *core.Config
+	// the location of the uploaded file (symlink destination or actual file)
+	// will be placed onto the channel
+	requestQueue chan<- string
+	// the max size of the request queue
+	maxQueueSize int
 }
 
-func NewHandler(config *core.Config) *Handler {
+// NewHandler creates a new Handler.
+func NewHandler(config *core.Config, requestQueue chan<- string, maxQueueSize int) *Handler {
 	h := Handler{
-		config: config,
+		config:       config,
+		requestQueue: requestQueue,
+		maxQueueSize: maxQueueSize,
 	}
 	return &h
 }
@@ -43,6 +53,14 @@ func (h *Handler) UploadHandler(w gohttp.ResponseWriter, r *gohttp.Request) {
 		fmt.Fprintf(w, "name parameter must be provided in the URL")
 		return
 	}
+
+	// check if the queue is full, if so reject the request
+	if len(h.requestQueue) >= h.maxQueueSize {
+		w.WriteHeader(gohttp.StatusServiceUnavailable)
+		fmt.Fprintf(w, "server has too many requests (%d) to fulfill", len(h.requestQueue))
+		return
+	}
+
 	defer r.Body.Close()
 
 	// in case the name included a path, ensure we jut have the name of the file, and
@@ -67,6 +85,9 @@ func (h *Handler) UploadHandler(w gohttp.ResponseWriter, r *gohttp.Request) {
 		return
 	}
 
+	// the message to put onto the 'requestQueue', default to the name of the file,
+	// change to the symlink destination if a symlink was created
+	requestMsg := name
 	if createSymlink {
 		// extract the file
 		err = core.ExtractFile(name, h.config.Dir)
@@ -83,7 +104,17 @@ func (h *Handler) UploadHandler(w gohttp.ResponseWriter, r *gohttp.Request) {
 			fmt.Fprintf(w, "problem creating symlink from %s to %s: %v", src, dst, err)
 			return
 		}
+
+		requestMsg = dst
 	}
+
+	// check if the queue is full, if so reject the request
+	if len(h.requestQueue) >= h.maxQueueSize {
+		w.WriteHeader(gohttp.StatusServiceUnavailable)
+		fmt.Fprintf(w, "server has too many requests (%d) to fulfill", len(h.requestQueue))
+		return
+	}
+	h.requestQueue <- requestMsg
 
 	w.WriteHeader(gohttp.StatusCreated)
 }
