@@ -3,9 +3,27 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/donovanhide/eventsource"
+  packages = ["."]
+  revision = "b8f31a59085e69dd2678cf51840db2ac625cb741"
+
+[[projects]]
+  branch = "master"
   name = "github.com/dsnet/compress"
   packages = [".","bzip2","bzip2/internal/sais","internal","internal/errors","internal/prefix"]
   revision = "0ae8e136a5df9e3caf6c0f69983608b07438411b"
+
+[[projects]]
+  name = "github.com/gambol99/go-marathon"
+  packages = ["."]
+  revision = "6b00a5b651b1beb2c6821863f7c60df490bd46c8"
+  version = "v0.7.1"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/google/go-querystring"
+  packages = ["query"]
+  revision = "53e6ce116135b80d037921a7fdd5138cf32d7a8a"
 
 [[projects]]
   name = "github.com/mholt/archiver"
@@ -34,6 +52,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "16cee7535e4c8b287021538c3b44079eeacd146cc0cd31a3c5b9cfe3a0aa1a7a"
+  inputs-digest = "ca712956b9b3b49774c96ff7d35d4e1451e95b47ccc97777e9a366822b7facc5"
   solver-name = "gps-cdcl"
   solver-version = 1

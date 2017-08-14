@@ -1,0 +1,101 @@
+{"apps": [
+    {
+        "id": "/myapp-txt",
+        "cmd": "while true; do md5sum $MESOS_SANDBOX/data.txt; sleep 5; done",
+        "constraints": [],
+        "cpus": 0.1,
+        "disk": 0,
+        "env": {},
+        "executor": "",
+        "healthChecks": [],
+        "instances": 1,
+        "mem": 32,
+        "ports": [
+          10000
+        ],
+        "portDefinitions": [
+          {
+            "port": 10000,
+            "protocol": "tcp",
+            "labels": {}
+          }
+        ],
+        "requirePorts": false,
+        "backoffSeconds": 1,
+        "backoffFactor": 1.15,
+        "maxLaunchDelaySeconds": 3600,
+        "dependencies": [],
+        "tasksRunning": 1,
+        "upgradeStrategy": {
+          "minimumHealthCapacity": 1,
+          "maximumOverCapacity": 1
+        },
+        "uris": [
+          "/stuff/data.txt"
+        ],
+        "version": "2017-08-14T14:42:11.047Z",
+        "versionInfo": {
+          "lastScalingAt": "2017-08-14T14:42:11.047Z",
+          "lastConfigChangeAt": "2017-08-14T14:42:11.047Z"
+        },
+        "labels": {},
+        "fetch": [
+          {
+            "uri": "/stuff/data.txt",
+            "executable": false,
+            "extract": false,
+            "cache": false
+          }
+        ]
+    },
+    {
+        "id": "/backened/another-txt",
+        "cmd": "while true; do md5sum $MESOS_SANDBOX/data.txt; sleep 5; done",
+        "constraints": [],
+        "cpus": 0.1,
+        "disk": 0,
+        "env": {},
+        "executor": "",
+        "healthChecks": [],
+        "instances": 1,
+        "mem": 32,
+        "ports": [
+          10000
+        ],
+        "portDefinitions": [
+          {
+            "port": 10000,
+            "protocol": "tcp",
+            "labels": {}
+          }
+        ],
+        "requirePorts": false,
+        "backoffSeconds": 1,
+        "backoffFactor": 1.15,
+        "maxLaunchDelaySeconds": 3600,
+        "dependencies": [],
+        "tasksRunning": 1,
+        "upgradeStrategy": {
+          "minimumHealthCapacity": 1,
+          "maximumOverCapacity": 1
+        },
+        "uris": [
+          "/stuff/data.txt"
+        ],
+        "version": "2017-08-14T15:01:12.945Z",
+        "versionInfo": {
+          "lastScalingAt": "2017-08-14T15:01:12.945Z",
+          "lastConfigChangeAt": "2017-08-14T15:01:12.945Z"
+        },
+        "labels": {},
+        "fetch": [
+          {
+            "uri": "/stuff/data.txt",
+            "executable": false,
+            "extract": false,
+            "cache": false
+          }
+        ]
+    }
+]
+}
