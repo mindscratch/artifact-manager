@@ -5,18 +5,23 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 )
 
 // Config stores application configuration
 type Config struct {
+	// address to listen on
+	Addr string
 	// the directory used for managing files
 	Dir string
 	// a prefix used for all app specific environment variables
 	EnvVarPrefix string
 	// the name of the host the application is running on
 	Hostname string
-	// address to listen on
-	Addr string
+	// Marathon hosts to interact with, can be one or more "host:port" separated by commas
+	MarathonHosts string
+	// the period in-between querying marathon
+	MarathonQueryInterval time.Duration
 	// port to listen on
 	Port int
 }
@@ -24,16 +29,24 @@ type Config struct {
 // NewConfig creates and returns a new Config.
 func NewConfig(envVarPrefix string) *Config {
 	c := Config{
-		Dir:          "/tmp",
-		EnvVarPrefix: envVarPrefix,
-		Addr:         "",
-		Port:         8900,
+		Addr:                  "",
+		Dir:                   "/tmp",
+		EnvVarPrefix:          envVarPrefix,
+		MarathonHosts:         "localhost:8080",
+		MarathonQueryInterval: 10 * time.Second,
+		Port: 8900,
 	}
 	if flag.Lookup("addr") == nil {
 		flag.StringVar(&c.Addr, "addr", c.Addr, "address to listen on")
 	}
 	if flag.Lookup("dir") == nil {
 		flag.StringVar(&c.Dir, "dir", c.Dir, "directory where files will be managed")
+	}
+	if flag.Lookup("marathon-hosts") == nil {
+		flag.StringVar(&c.MarathonHosts, "marathon-hosts", c.MarathonHosts, "comma-delimited list of marathon hosts, \"host:port\"")
+	}
+	if flag.Lookup("marathon-query-interval") == nil {
+		flag.DurationVar(&c.MarathonQueryInterval, "marathon-query-interval", c.MarathonQueryInterval, "time to wait between queries to marathon")
 	}
 	if flag.Lookup("port") == nil {
 		flag.IntVar(&c.Port, "port", c.Port, "port to listen on")
@@ -62,6 +75,22 @@ func (c *Config) Parse() error {
 		return fmt.Errorf("directory=%s does not exist", c.Dir)
 	}
 
+	key = c.EnvVarPrefix + "MARATHON_HOSTS"
+	val = os.Getenv(key)
+	if val != "" {
+		c.MarathonHosts = os.Getenv(key)
+	}
+
+	key = c.EnvVarPrefix + "MARATHON_QUERY_INTERVAL"
+	val = os.Getenv(key)
+	if val != "" {
+		d, err := time.ParseDuration(val)
+		if err != nil {
+			return fmt.Errorf("marathon-query-interval=%v is not a valid duration: %v", val, err)
+		}
+		c.MarathonQueryInterval = d
+	}
+
 	key = c.EnvVarPrefix + "PORT"
 	val = os.Getenv(key)
 	if val != "" {
@@ -80,7 +109,7 @@ func (c *Config) Usage() {
 	flag.PrintDefaults()
 	fmt.Fprintln(os.Stderr)
 	fmt.Fprintln(os.Stderr, "Note: environment variables can be defined to override any command-line flag.")
-	fmt.Fprintf(os.Stderr, "The variables are equivalent to the command-line flag names, except that they should be upper-case and prefixed with \"%s\" (excluding double quotes)\n", c.EnvVarPrefix)
+	fmt.Fprintf(os.Stderr, "The variables are equivalent to the command-line flag names, except that they should be upper-case, hypens replaced by underscores and prefixed with \"%s\" (excluding double quotes)\n", c.EnvVarPrefix)
 }
 
 // ServeAddr returns the address the server should listen on.
