@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io/ioutil"
 	"os"
 	"time"
 
@@ -33,7 +34,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	artifactsService := artifacts.NewArtifactsService(marathonClient, nil)
+	debugWriter := ioutil.Discard
+	if config.Debug {
+		debugWriter = os.Stdout
+	}
+	artifactsService := artifacts.NewArtifactsService(marathonClient, debugWriter)
 	go func() {
 		artifactsService.StartFetching(config.MarathonQueryInterval)
 	}()

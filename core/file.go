@@ -50,6 +50,9 @@ func ExtractFile(file, extractIntoDir string) error {
 
 // Symlink creates a symlink named dst pointing to src.
 func Symlink(src, dst string) error {
+	if _, err := os.Lstat(dst); err == nil {
+		os.Remove(dst)
+	}
 	return os.Symlink(src, dst)
 }
 
