@@ -94,12 +94,16 @@ func (h *Handler) UploadHandler(w gohttp.ResponseWriter, r *gohttp.Request) {
 		requestMsg = dst
 
 		// if the 'src' already exists, move it
-		newPath := fmt.Sprintf("%s-%d", src, time.Now().UnixNano()/int64(time.Millisecond))
-		err = os.Rename(src, newPath)
-		if err != nil {
-			w.WriteHeader(gohttp.StatusInternalServerError)
-			fmt.Fprintf(w, "problem renaming existing source path from %s to %s", src, newPath)
-			return
+		if src != name {
+			if _, err = os.Stat(src); err == nil || os.IsExist(err) {
+				newPath := fmt.Sprintf("%s-%d", src, time.Now().UnixNano()/int64(time.Millisecond))
+				err = os.Rename(src, newPath)
+				if err != nil {
+					w.WriteHeader(gohttp.StatusInternalServerError)
+					fmt.Fprintf(w, "problem renaming existing source path from %s to %s", src, newPath)
+					return
+				}
+			}
 		}
 
 		// extract the file

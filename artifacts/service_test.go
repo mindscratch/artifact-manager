@@ -37,33 +37,35 @@ func TestArtifactsService_FetchArtifacts(t *testing.T) {
 		return
 	}
 
-	// create the artifacts service and fetch the artifacts
+	// create the artifacts service and fetch the volumes
 	svc := NewArtifactsService(marathonClient, nil)
-	err = svc.FetchArtifacts()
+	count, err := svc.FetchVolumes()
 	if err != nil {
-		t.Errorf("failed to fetch artifacts: %v", err)
-	}
-
-	// ensure it has the correct artifacts
-	artifactName := "data.txt"
-	if !svc.HasArtifact(artifactName) {
-		t.Errorf("expected to have applications associated with artifact named %s", artifactName)
+		t.Errorf("failed to fetch volumes: %v", err)
 		return
 	}
 
-	appIds := svc.GetAppIds(artifactName)
-	if len(appIds) != 2 {
-		t.Errorf("expected two applications to depend on %s, got %d", artifactName, len(appIds))
+	if count != 1 {
+		t.Errorf("expected there to be %d volume, got %d", 1, count)
 		return
 	}
 
-	appID := "/myapp-txt"
+	// ensure it has the correct volumes
+	volumeHostPath := "/data/models/mymodel-latest"
+	if !svc.HasArtifact(volumeHostPath) {
+		t.Errorf("expected to have applications associated with path named %s", volumeHostPath)
+		return
+	}
+
+	appIds := svc.GetAppIds(volumeHostPath)
+	if len(appIds) != 1 {
+		t.Errorf("expected one application to depend on %s, got %d", volumeHostPath, len(appIds))
+		return
+	}
+
+	appID := "/myapp"
 	if appIds[0] != appID {
 		t.Errorf("expected the first application to be %s, got %s", appID, appIds[0])
 		return
-	}
-	appID = "/backened/another-txt"
-	if appIds[1] != appID {
-		t.Errorf("expected the second application to be %s, got %s", appID, appIds[1])
 	}
 }

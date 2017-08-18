@@ -33,6 +33,8 @@ func SaveFile(fileName string, reader io.Reader, expectedLength int64) error {
 }
 
 // ExtractFile file into a directory provided by the extractIntoDir argument.
+//
+// If the file is not an archive, nothing will happen.
 func ExtractFile(file, extractIntoDir string) error {
 	f, err := os.Open(file)
 	if err != nil {

@@ -121,20 +121,24 @@ func TestUploadHandler_WithNameSrcDstUrlParams(t *testing.T) {
 			msg = fmt.Sprintf("%s: response=%s", msg, string(resp))
 		}
 		t.Errorf(msg)
+		return
 	}
 
 	// ensure the file was created
 	if _, err := os.Stat(pathToFile); os.IsNotExist(err) {
 		t.Errorf("file should have been created %s, but it does not exist", pathToFile)
+		return
 	}
 
 	// ensure a symlink was made
 	stat, err := os.Stat(symlinkDst)
 	if os.IsNotExist(err) {
 		t.Errorf("symlink should have been created from %s to %s, but it does not exist", symlinkSrc, symlinkDst)
+		return
 	}
 	if stat.Mode()&os.ModeSymlink != 0 {
 		t.Errorf("expected %s to be a symlink but it's not", symlinkDst)
+		return
 	}
 
 	if len(requestQueue) != 1 {
