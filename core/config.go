@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -12,6 +13,8 @@ import (
 type Config struct {
 	// address to listen on
 	Addr string
+	// enable debug logging
+	Debug bool
 	// the directory used for managing files
 	Dir string
 	// a prefix used for all app specific environment variables
@@ -30,6 +33,7 @@ type Config struct {
 func NewConfig(envVarPrefix string) *Config {
 	c := Config{
 		Addr:                  "",
+		Debug:                 false,
 		Dir:                   "/tmp",
 		EnvVarPrefix:          envVarPrefix,
 		MarathonHosts:         "localhost:8080",
@@ -38,6 +42,9 @@ func NewConfig(envVarPrefix string) *Config {
 	}
 	if flag.Lookup("addr") == nil {
 		flag.StringVar(&c.Addr, "addr", c.Addr, "address to listen on")
+	}
+	if flag.Lookup("debug") == nil {
+		flag.BoolVar(&c.Debug, "debug", c.Debug, "enable debug logging")
 	}
 	if flag.Lookup("dir") == nil {
 		flag.StringVar(&c.Dir, "dir", c.Dir, "directory where files will be managed")
@@ -63,6 +70,12 @@ func (c *Config) Parse() error {
 	val := os.Getenv(key)
 	if val != "" {
 		c.Addr = os.Getenv(key)
+	}
+
+	key = c.EnvVarPrefix + "DEBUG"
+	val = os.Getenv(key)
+	if strings.HasPrefix(strings.ToLower(val), "t") {
+		c.Debug = true
 	}
 
 	key = c.EnvVarPrefix + "DIR"

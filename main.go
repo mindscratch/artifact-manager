@@ -1,7 +1,9 @@
 package main
 
 import (
+	"io/ioutil"
 	"os"
+	"time"
 
 	"github.com/mindscratch/artifact-manager/artifacts"
 	"github.com/mindscratch/artifact-manager/core"
@@ -32,12 +34,20 @@ func main() {
 		os.Exit(1)
 	}
 
-	artifactsService := artifacts.NewArtifactsService(marathonClient, nil)
+	debugWriter := ioutil.Discard
+	if config.Debug {
+		debugWriter = os.Stdout
+	}
+	artifactsService := artifacts.NewArtifactsService(marathonClient, debugWriter)
 	go func() {
-		artifactsService.Start(config.MarathonQueryInterval)
+		artifactsService.StartFetching(config.MarathonQueryInterval)
 	}()
 
 	requestQueue := make(chan string, 100)
+
+	go func() {
+		artifactsService.StartApplicationRestartProcessing(requestQueue, 5, 5*time.Second)
+	}()
 
 	// setup http server
 	core.Log("Serving requests at %s", config.ServeAddr())

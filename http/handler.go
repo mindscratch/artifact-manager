@@ -3,7 +3,9 @@ package http
 import (
 	"fmt"
 	gohttp "net/http"
+	"os"
 	"path"
+	"time"
 
 	"github.com/mindscratch/artifact-manager/core"
 )
@@ -85,10 +87,21 @@ func (h *Handler) UploadHandler(w gohttp.ResponseWriter, r *gohttp.Request) {
 		return
 	}
 
-	// the message to put onto the 'requestQueue', default to the name of the file,
-	// change to the symlink destination if a symlink was created
+	// the message to put onto the 'requestQueue' is the name of file
+	// or the "dst" of the symlink (as the 'dst' woud match the 'hostPath' of the marathon app)
 	requestMsg := name
 	if createSymlink {
+		requestMsg = dst
+
+		// if the 'src' already exists, move it
+		newPath := fmt.Sprintf("%s-%d", src, time.Now().UnixNano()/int64(time.Millisecond))
+		err = os.Rename(src, newPath)
+		if err != nil {
+			w.WriteHeader(gohttp.StatusInternalServerError)
+			fmt.Fprintf(w, "problem renaming existing source path from %s to %s", src, newPath)
+			return
+		}
+
 		// extract the file
 		err = core.ExtractFile(name, h.config.Dir)
 		if err != nil {
@@ -104,8 +117,6 @@ func (h *Handler) UploadHandler(w gohttp.ResponseWriter, r *gohttp.Request) {
 			fmt.Fprintf(w, "problem creating symlink from %s to %s: %v", src, dst, err)
 			return
 		}
-
-		requestMsg = dst
 	}
 
 	// check if the queue is full, if so reject the request
@@ -114,6 +125,8 @@ func (h *Handler) UploadHandler(w gohttp.ResponseWriter, r *gohttp.Request) {
 		fmt.Fprintf(w, "server has too many requests (%d) to fulfill", len(h.requestQueue))
 		return
 	}
+
+	fmt.Println("adding request:", requestMsg)
 	h.requestQueue <- requestMsg
 
 	w.WriteHeader(gohttp.StatusCreated)
