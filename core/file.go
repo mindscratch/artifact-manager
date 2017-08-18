@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 
 	"github.com/mholt/archiver"
 	filetype "gopkg.in/h2non/filetype.v1"
@@ -56,6 +57,15 @@ func Symlink(src, dst string) error {
 		os.Remove(dst)
 	}
 	return os.Symlink(src, dst)
+}
+
+// RenameWithTimestamp renames a file by appending the existing name with a timestmap.
+func RenameWithTimestamp(name string) error {
+	if _, err := os.Stat(name); err == nil || os.IsExist(err) {
+		newPath := fmt.Sprintf("%s-%d", name, time.Now().UnixNano()/int64(time.Millisecond))
+		return os.Rename(name, newPath)
+	}
+	return nil
 }
 
 func isArchive(reader io.Reader) bool {

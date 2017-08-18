@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"log"
 	gohttp "net/http"
 	"net/http/httptest"
 	"os"
@@ -26,7 +27,7 @@ func TestUploadHandler_WithoutUrlParams(t *testing.T) {
 
 	// handler is some http handler function we wrote that we want to test
 	requestQueue := make(chan string, 10)
-	h := NewHandler(core.NewConfig("AM_TEST_"), requestQueue, 10)
+	h := NewHandler(core.NewConfig("AM_TEST_"), requestQueue, 10, log.New(ioutil.Discard, log.Prefix(), log.Flags()))
 	h.UploadHandler(rec, req)
 
 	if rec.Code != gohttp.StatusBadRequest {
@@ -57,7 +58,7 @@ func TestUploadHandler_WithNameUrlParam(t *testing.T) {
 
 	// handler is some http handler function we wrote that we want to test
 	requestQueue := make(chan string, 10)
-	h := NewHandler(core.NewConfig("AM_TEST_"), requestQueue, 10)
+	h := NewHandler(core.NewConfig("AM_TEST_"), requestQueue, 10, log.New(ioutil.Discard, log.Prefix(), log.Flags()))
 	pathToFile := path.Join(h.config.Dir, "Makefile")
 	defer os.Remove(pathToFile)
 	h.UploadHandler(rec, req)
@@ -101,7 +102,7 @@ func TestUploadHandler_WithNameSrcDstUrlParams(t *testing.T) {
 
 	// handler is some http handler function we wrote that we want to test
 	requestQueue := make(chan string, 10)
-	h := NewHandler(core.NewConfig("AM_TEST_"), requestQueue, 10)
+	h := NewHandler(core.NewConfig("AM_TEST_"), requestQueue, 10, log.New(ioutil.Discard, log.Prefix(), log.Flags()))
 	pathToFile := path.Join(h.config.Dir, "Makefile")
 	symlinkSrc := path.Join(h.config.Dir, "Makefile")
 	symlinkDst := path.Join(h.config.Dir, "myfile")
@@ -165,7 +166,7 @@ func TestUploadHandler_WithArchiveNoSymlink(t *testing.T) {
 
 	// handler is some http handler function we wrote that we want to test
 	requestQueue := make(chan string, 10)
-	h := NewHandler(core.NewConfig("AM_TEST_"), requestQueue, 10)
+	h := NewHandler(core.NewConfig("AM_TEST_"), requestQueue, 10, log.New(ioutil.Discard, log.Prefix(), log.Flags()))
 	pathToFile := path.Join(h.config.Dir, "x.tgz")
 	defer func() {
 		os.Remove(pathToFile)
@@ -212,7 +213,7 @@ func TestUploadHandler_WithArchiveAndSymlink(t *testing.T) {
 
 	// handler is some http handler function we wrote that we want to test
 	requestQueue := make(chan string, 10)
-	h := NewHandler(core.NewConfig("AM_TEST_"), requestQueue, 10)
+	h := NewHandler(core.NewConfig("AM_TEST_"), requestQueue, 10, log.New(ioutil.Discard, log.Prefix(), log.Flags()))
 	pathToFile := path.Join(h.config.Dir, "x.tgz")
 	symlinkSrc := path.Join(h.config.Dir, "sample")
 	symlinkDst := path.Join(h.config.Dir, "x-latest")
@@ -283,7 +284,7 @@ func TestUploadHandler_ExceedRequestLImit(t *testing.T) {
 	// simulate a request having already been put onto the queue
 	requestQueue <- "this is a test"
 
-	h := NewHandler(core.NewConfig("AM_TEST_"), requestQueue, 1)
+	h := NewHandler(core.NewConfig("AM_TEST_"), requestQueue, 1, log.New(ioutil.Discard, log.Prefix(), log.Flags()))
 	pathToFile := path.Join(h.config.Dir, "Makefile")
 	defer os.Remove(pathToFile)
 	h.UploadHandler(rec, req)

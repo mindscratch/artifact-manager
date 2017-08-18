@@ -3,6 +3,7 @@ package artifacts
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	gohttp "net/http"
 	"net/http/httptest"
 	"net/url"
@@ -38,7 +39,7 @@ func TestArtifactsService_FetchArtifacts(t *testing.T) {
 	}
 
 	// create the artifacts service and fetch the volumes
-	svc := NewArtifactsService(marathonClient, nil)
+	svc := NewArtifactsService(marathonClient, log.New(ioutil.Discard, log.Prefix(), log.Flags()))
 	count, err := svc.FetchVolumes()
 	if err != nil {
 		t.Errorf("failed to fetch volumes: %v", err)

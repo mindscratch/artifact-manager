@@ -21,6 +21,8 @@ type Config struct {
 	EnvVarPrefix string
 	// the name of the host the application is running on
 	Hostname string
+	// enable debugging by the go-marathon library
+	MarathonDebug bool
 	// Marathon hosts to interact with, can be one or more "host:port" separated by commas
 	MarathonHosts string
 	// the period in-between querying marathon
@@ -36,6 +38,7 @@ func NewConfig(envVarPrefix string) *Config {
 		Debug:                 false,
 		Dir:                   "/tmp",
 		EnvVarPrefix:          envVarPrefix,
+		MarathonDebug:         false,
 		MarathonHosts:         "localhost:8080",
 		MarathonQueryInterval: 10 * time.Second,
 		Port: 8900,
@@ -48,6 +51,9 @@ func NewConfig(envVarPrefix string) *Config {
 	}
 	if flag.Lookup("dir") == nil {
 		flag.StringVar(&c.Dir, "dir", c.Dir, "directory where files will be managed")
+	}
+	if flag.Lookup("marathon-debug") == nil {
+		flag.BoolVar(&c.MarathonDebug, "marathon-debug", c.MarathonDebug, "enable go-marathon library debug logging")
 	}
 	if flag.Lookup("marathon-hosts") == nil {
 		flag.StringVar(&c.MarathonHosts, "marathon-hosts", c.MarathonHosts, "comma-delimited list of marathon hosts, \"host:port\"")
@@ -86,6 +92,12 @@ func (c *Config) Parse() error {
 	_, err := os.Stat(c.Dir)
 	if os.IsNotExist(err) {
 		return fmt.Errorf("directory=%s does not exist", c.Dir)
+	}
+
+	key = c.EnvVarPrefix + "MARATHON_DEBUG"
+	val = os.Getenv(key)
+	if strings.HasPrefix(strings.ToLower(val), "t") {
+		c.MarathonDebug = true
 	}
 
 	key = c.EnvVarPrefix + "MARATHON_HOSTS"

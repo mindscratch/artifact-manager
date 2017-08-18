@@ -3,7 +3,6 @@ package artifacts
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -52,7 +51,7 @@ func NewMarathonClient(httpClient *http.Client, debug io.Writer, marathonAddrs .
 type ArtifactsService struct {
 	volumes Volumes
 	client  marathon.Marathon
-	debug   io.Writer
+	debug   *log.Logger
 	mutex   *sync.Mutex
 	stopCh  chan struct{}
 	stopped bool
@@ -60,12 +59,8 @@ type ArtifactsService struct {
 
 // NewArtifactsService configures, creates and returns a new ArtifactsService.
 //
-// The debug argument allows debug messages to be written to the provided writer,
-// pass nil to disable.
-func NewArtifactsService(client marathon.Marathon, debug io.Writer) *ArtifactsService {
-	if debug == nil {
-		debug = ioutil.Discard
-	}
+// The debug argument allows debug messages to be written to the provided logger.
+func NewArtifactsService(client marathon.Marathon, debug *log.Logger) *ArtifactsService {
 	as := ArtifactsService{
 		client: client,
 		debug:  debug,
@@ -85,15 +80,15 @@ func (as *ArtifactsService) FetchVolumes() (int, error) {
 
 	newVolumes := Volumes{}
 
-	as.log("Found %d applications running\n", len(applications.Apps))
+	as.debug.Printf("Found %d applications running\n", len(applications.Apps))
 	for _, application := range applications.Apps {
 		if application.Container != nil {
 			volumes := application.Container.Volumes
 			if volumes != nil && len(*volumes) > 0 {
-				as.log("%s depends on %d volumes\n", application.ID, len(*volumes))
+				as.debug.Printf("%s depends on %d volumes\n", application.ID, len(*volumes))
 				for _, volume := range *volumes {
 					if volume.HostPath != "" {
-						as.log("Adding %s path for %s\n", volume.HostPath, application.ID)
+						as.debug.Printf("Adding %s path for %s\n", volume.HostPath, application.ID)
 						newVolumes.Add(application.ID, volume.HostPath)
 					}
 				}
@@ -185,11 +180,12 @@ func (as *ArtifactsService) StartApplicationRestartProcessing(requestQueue <-cha
 		case path := <-requestQueue:
 			paths = append(paths, path)
 			if len(paths) >= count {
+				log.Printf("Met or exceeded threshold (%d), there are %d paths that were updated\n", count, len(paths))
 				as.restartApps(paths)
 				paths = make([]string, 0)
 			}
 		case <-time.After(timeout):
-			log.Printf("Timeout after %s, have %d paths that have been updated", timeout, len(paths))
+			log.Printf("Timeout after %s, have %d paths that have been updated\n", timeout, len(paths))
 			if len(paths) > 0 {
 				as.restartApps(paths)
 				paths = make([]string, 0)
@@ -200,21 +196,16 @@ func (as *ArtifactsService) StartApplicationRestartProcessing(requestQueue <-cha
 }
 
 func (as *ArtifactsService) restartApps(paths []string) {
-	log.Printf("we have %d paths that were updated\n", len(paths))
 	for _, path := range paths {
 		appIds := as.volumes.Get(path)
-		fmt.Printf("found %d app ids depending on %s\n", len(appIds), path)
+		as.debug.Printf("found %d app ids depending on %s\n", len(appIds), path)
 		for _, appID := range appIds {
 			deploymentID, err := as.client.RestartApplication(appID, true)
 			if err != nil {
 				log.Printf("failed to restart %s: %v\n", appID, err)
 				continue
 			}
-			log.Printf("restarted %s deploymentID=%s version=%s\n", appID, deploymentID.DeploymentID, deploymentID.Version)
+			as.debug.Printf("restarted %s deploymentID=%s version=%s\n", appID, deploymentID.DeploymentID, deploymentID.Version)
 		}
 	}
-}
-
-func (as *ArtifactsService) log(format string, values ...interface{}) {
-	as.debug.Write([]byte(fmt.Sprintf(format, values...)))
 }
