@@ -12,14 +12,9 @@ import (
 )
 
 func main() {
-	//TODO: add metrics, maybe record trace events
-	// default < command line < env var
-
-	//TODO REST API:
-	// src, dst -- needed for symlink
-	// restart apps - true (default - with 'force')
-	//
-	// Create go routine worker pool
+	// TODO: add metrics, maybe record trace events
+	// TODO: Create go routine worker pool
+	// note: default < command line < env var
 
 	config := core.NewConfig("AM_")
 	err := config.Parse()
