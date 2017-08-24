@@ -1,25 +1,18 @@
 NAME=artifact-manager
-IMAGE_NAME=codecraig/artifact-manager
-PACKAGES=$(shell go list ./... | grep -v /vendor/)
-RACE := $(shell test $$(go env GOARCH) != "amd64" || (echo "-race"))
+IMAGE_NAME=$(NAME)
+VERSION=0.0.1
+mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
+mkfile_dir := $(shell dirname $(mkfile_path))
+GO_TMPDIR=$(HOME)/tmp
 
-test: ## run tests, except integration tests
-	@go test ${RACE} ${PACKAGES}
+GO ?= go
 
-binaries:
-	@echo "Compiling..."
-	@mkdir -p ./bin
-	@go build -i -o ./bin/$(NAME)
-	@CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -i -o ./bin/$(NAME)
-	@echo "All done! The binaries is in ./bin let's have fun!"
+build: ## build the application
+	@CGO_ENABLE=0 $(GO) build -a -ldflags '-s' -o $(NAME) .
 
-build/docker: binaries
-	@docker build -t $(IMAGE_NAME):latest .
-
-vet: ## run go vet
-	@test -z "$$(go vet ${PACKAGES} 2>&1 | grep -v '*composite literal uses unkeyed fields|exit status 0)' | tee /dev/stderr)"
+test:
+	@mkdir -p $(GO_TMPDIR)
+	@TMPDIR=$(GO_TMPDIR) $(GO) test $$($(GO) list ./... | grep -v /vendor/)
 
 help: ## this help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
-
-ci: vet test

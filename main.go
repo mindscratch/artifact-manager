@@ -6,9 +6,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/mindscratch/artifact-manager/artifacts"
-	"github.com/mindscratch/artifact-manager/core"
-	"github.com/mindscratch/artifact-manager/http"
+	"apex/artifact-manager/artifacts"
+	"apex/artifact-manager/core"
+	"apex/artifact-manager/http"
 )
 
 func main() {

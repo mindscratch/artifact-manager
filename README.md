@@ -4,6 +4,8 @@ artifact-manager provides an HTTP API allowing clients to upload files. When a f
 uploaded and a docker application running in [Marathon](https://mesosphere.github.io/marathon/)
 has a volume whose `hostPath` matches, it will get restarted.
 
+Instructions on how to contribute can be found in the `Contribute` section.
+
 ## How does it work?
 
 A client uploads a file to artifact-manager, which gets stored to a configurable location. In
@@ -135,3 +137,16 @@ curl -X POST http://artifact-manager.marathon.mesos:8900/?name=notes.txt --data-
 ```
 
 The file will be written to `/data/notes.txt` and no symlink will be created.
+
+## Contribute
+
+```
+cd $GOPATH/src
+mkdir -p apex
+cd apex
+git clone git@github.com:mindscratch/artifact-manager.git
+
+
+# build
+make build
+```

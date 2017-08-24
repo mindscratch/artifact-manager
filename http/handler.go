@@ -6,7 +6,7 @@ import (
 	gohttp "net/http"
 	"path"
 
-	"github.com/mindscratch/artifact-manager/core"
+	"apex/artifact-manager/core"
 )
 
 // Handler represents a type that handles HTTP requests.

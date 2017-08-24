@@ -11,7 +11,7 @@ import (
 	"path"
 	"testing"
 
-	"github.com/mindscratch/artifact-manager/core"
+	"apex/artifact-manager/core"
 )
 
 // TestUploadHandler_WithoutUrlParams tests the behavior when a file is uploaded
