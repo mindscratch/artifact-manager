@@ -19,6 +19,9 @@ type Config struct {
 	Dir string
 	// a prefix used for all app specific environment variables
 	EnvVarPrefix string
+        // if the application is run inside a container, the external directory would be the location on
+        // the host.
+        ExternalDir string
 	// the name of the host the application is running on
 	Hostname string
 	// enable debugging by the go-marathon library
@@ -38,6 +41,7 @@ func NewConfig(envVarPrefix string) *Config {
 		Debug:                 false,
 		Dir:                   "/tmp",
 		EnvVarPrefix:          envVarPrefix,
+                ExternalDir:           "/tmp",
 		MarathonDebug:         false,
 		MarathonHosts:         "localhost:8080",
 		MarathonQueryInterval: 10 * time.Second,
@@ -51,6 +55,9 @@ func NewConfig(envVarPrefix string) *Config {
 	}
 	if flag.Lookup("dir") == nil {
 		flag.StringVar(&c.Dir, "dir", c.Dir, "directory where files will be managed")
+	}
+	if flag.Lookup("external-dir") == nil {
+		flag.StringVar(&c.ExternalDir, "external-dir", c.ExternalDir, "if running in a container, this is the directory on the host that maps to `dir` inside the container")
 	}
 	if flag.Lookup("marathon-debug") == nil {
 		flag.BoolVar(&c.MarathonDebug, "marathon-debug", c.MarathonDebug, "enable go-marathon library debug logging")
@@ -93,6 +100,15 @@ func (c *Config) Parse() error {
 	if os.IsNotExist(err) {
 		return fmt.Errorf("directory=%s does not exist", c.Dir)
 	}
+
+	key = c.EnvVarPrefix + "EXTERNAL_DIR"
+	val = os.Getenv(key)
+	if val != "" {
+		c.ExternalDir = os.Getenv(key)
+	} else {
+                // if no value is specified, default to being equal to `dir`
+                c.ExternalDir = c.Dir
+        }
 
 	key = c.EnvVarPrefix + "MARATHON_DEBUG"
 	val = os.Getenv(key)

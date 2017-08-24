@@ -102,10 +102,13 @@ func TestUploadHandler_WithNameSrcDstUrlParams(t *testing.T) {
 
 	// handler is some http handler function we wrote that we want to test
 	requestQueue := make(chan string, 10)
-	h := NewHandler(core.NewConfig("AM_TEST_"), requestQueue, 10, log.New(ioutil.Discard, log.Prefix(), log.Flags()))
+        config := core.NewConfig("AM_TEST_")
+        config.ExternalDir = "/tmp2" 
+	h := NewHandler(config, requestQueue, 10, log.New(ioutil.Discard, log.Prefix(), log.Flags()))
 	pathToFile := path.Join(h.config.Dir, "Makefile")
 	symlinkSrc := path.Join(h.config.Dir, "Makefile")
 	symlinkDst := path.Join(h.config.Dir, "myfile")
+        expectedRequestMsg := path.Join(h.config.ExternalDir, "myfile")
 	defer func() {
 		os.RemoveAll(symlinkDst)
 		os.RemoveAll(symlinkSrc)
@@ -146,8 +149,8 @@ func TestUploadHandler_WithNameSrcDstUrlParams(t *testing.T) {
 		t.Errorf("expected requestQueue channel to have 1 message; got %d", len(requestQueue))
 	} else {
 		result := <-requestQueue
-		if result != symlinkDst {
-			t.Errorf("expected message on requestQueue to be %s; got %v", pathToFile, symlinkDst)
+		if result != expectedRequestMsg {
+			t.Errorf("expected message on requestQueue to be %s; got %v", pathToFile, expectedRequestMsg)
 		}
 	}
 }

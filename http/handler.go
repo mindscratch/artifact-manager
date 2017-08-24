@@ -96,9 +96,9 @@ func (h *Handler) UploadHandler(w gohttp.ResponseWriter, r *gohttp.Request) {
 
 	// the message to put onto the 'requestQueue' is the name of file
 	// or the "dst" of the symlink (as the 'dst' woud match the 'hostPath' of the marathon app)
-	requestMsg := name
+	requestMsg := path.Join(h.config.ExternalDir, path.Base(name))
 	if createSymlink {
-		requestMsg = dst
+		requestMsg = path.Join(h.config.ExternalDir, path.Base(dst))
 
 		// if the 'src' already exists and is not the same as 'name', move it
 		if src != name {
