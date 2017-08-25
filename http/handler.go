@@ -94,8 +94,12 @@ func (h *Handler) UploadHandler(w gohttp.ResponseWriter, r *gohttp.Request) {
 		return
 	}
 
-	// the message to put onto the 'requestQueue' is the name of file
-	// or the "dst" of the symlink (as the 'dst' woud match the 'hostPath' of the marathon app)
+	// the message to put onto the 'requestQueue' is the full path to the file
+	// within the `ExternalDir`. The `ExternalDir` is used because its the directory outside
+	// of the application (if its running in a container) that other applications would have
+	// mounted into their containers. If a symlink is being created for the file, then the
+	// `dst` parameter is used as the name and `ExternalDir` is still used as the path. Again,
+	// the idea being this would match the `hostPath` defined in a Marathon app.
 	requestMsg := path.Join(h.config.ExternalDir, path.Base(name))
 	if createSymlink {
 		requestMsg = path.Join(h.config.ExternalDir, path.Base(dst))
