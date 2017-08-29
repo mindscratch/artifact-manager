@@ -200,6 +200,7 @@ func (as *ArtifactsService) restartApps(paths []string) {
 		appIds := as.volumes.Get(path)
 		as.debug.Printf("found %d app ids depending on %s\n", len(appIds), path)
 		for _, appID := range appIds {
+			log.Printf("restarting %s\n", appID)
 			deploymentID, err := as.client.RestartApplication(appID, true)
 			if err != nil {
 				log.Printf("failed to restart %s: %v\n", appID, err)
