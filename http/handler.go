@@ -81,7 +81,7 @@ func (h *Handler) UploadHandler(w gohttp.ResponseWriter, r *gohttp.Request) {
 	createSymlink := false
 	if src != "" && dst != "" {
 		createSymlink = true
-		src = path.Join(h.config.Dir, src)
+		src = path.Join(h.config.ExternalDir, src)
 		dst = path.Join(h.config.Dir, dst)
 	}
 

@@ -1,6 +1,6 @@
 NAME=artifact-manager
 IMAGE_NAME=$(NAME)
-VERSION=0.0.2
+VERSION=0.0.3
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 mkfile_dir := $(shell dirname $(mkfile_path))
 GO_TMPDIR=$(HOME)/tmp

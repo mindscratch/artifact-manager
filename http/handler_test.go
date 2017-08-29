@@ -103,7 +103,7 @@ func TestUploadHandler_WithNameSrcDstUrlParams(t *testing.T) {
 	// handler is some http handler function we wrote that we want to test
 	requestQueue := make(chan string, 10)
         config := core.NewConfig("AM_TEST_")
-        config.ExternalDir = "/tmp2" 
+        config.ExternalDir = config.ExternalDir
 	h := NewHandler(config, requestQueue, 10, log.New(ioutil.Discard, log.Prefix(), log.Flags()))
 	pathToFile := path.Join(h.config.Dir, "Makefile")
 	symlinkSrc := path.Join(h.config.Dir, "Makefile")
