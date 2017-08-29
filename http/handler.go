@@ -77,10 +77,12 @@ func (h *Handler) UploadHandler(w gohttp.ResponseWriter, r *gohttp.Request) {
 	name = path.Join(h.config.Dir, name)
 
 	// src and dst are optional, if they're provided a symlink we'll be created
+	var internalSrc string
 	var err error
 	createSymlink := false
 	if src != "" && dst != "" {
 		createSymlink = true
+		internalSrc = path.Join(h.config.Dir, src)
 		src = path.Join(h.config.ExternalDir, src)
 		dst = path.Join(h.config.Dir, dst)
 	}
@@ -105,13 +107,13 @@ func (h *Handler) UploadHandler(w gohttp.ResponseWriter, r *gohttp.Request) {
 		requestMsg = path.Join(h.config.ExternalDir, path.Base(dst))
 
 		// if the 'src' already exists and is not the same as 'name', move it
-		if src != name {
-			h.debug.Printf("Given src %s might exist, renaming if necessary", src)
-			err = core.RenameWithTimestamp(src)
+		if internalSrc != "" && internalSrc != name {
+			h.debug.Printf("Given src %s might exist, renaming if necessary", internalSrc)
+			err = core.RenameWithTimestamp(internalSrc)
 			if err != nil {
-				core.Log("problem renaming existing source path %s: %v", src, err)
+				core.Log("problem renaming existing source path %s: %v", internalSrc, err)
 				w.WriteHeader(gohttp.StatusInternalServerError)
-				fmt.Fprintf(w, "problem renaming existing source path %s: %v", src, err)
+				fmt.Fprintf(w, "problem renaming existing source path %s: %v", internalSrc, err)
 				return
 			}
 		}
